@@ -1,0 +1,5 @@
+{
+    "name": "QueryMaster",
+    "link": "/apps/querymaster",
+    "provider": "/src/ServiceProvider.pm"
+}

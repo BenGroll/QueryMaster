@@ -1,0 +1,95 @@
+<style>
+    .whole {
+        min-width: 70vw;
+        max-width: 70vw;
+        /* border: 1px solid black; */
+    }
+    .grid {
+        display:grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: 1fr 5fr;
+    }
+    .loading {
+        height: 100%;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        }
+        .loading .wave {
+        width: 5px;
+        height: 100px;
+        background: slategray;
+        margin: 10px;
+        animation: wave 1s linear infinite;
+        border-radius: 20px;
+        }
+        .loading .wave:nth-child(2) {
+        animation-delay: 0.1s;
+        }
+        .loading .wave:nth-child(3) {
+        animation-delay: 0.2s;
+        }
+        .loading .wave:nth-child(4) {
+        animation-delay: 0.3s;
+        }
+        .loading .wave:nth-child(5) {
+        animation-delay: 0.4s;
+        }
+        .loading .wave:nth-child(6) {
+        animation-delay: 0.5s;
+        }
+        .loading .wave:nth-child(7) {
+        animation-delay: 0.6s;
+        }
+        .loading .wave:nth-child(8) {
+        animation-delay: 0.7s;
+        }
+        .loading .wave:nth-child(9) {
+        animation-delay: 0.8s;
+        }
+        .loading .wave:nth-child(10) {
+        animation-delay: 0.9s;
+        }
+        .loading .info {
+            color: slategray;
+        }
+
+        @keyframes wave {
+        0% {
+            transform: scale(0);
+        }
+        50% {
+            transform: scale(1);
+        }
+        100% {
+            transform: scale(0);
+        }
+        }
+        .opaque {
+            display: none;
+        }
+</style>
+
+<div class="Builder"><TMPL_VAR name="querybuilder"></div>
+<div class="whole grid">
+    <div><TMPL_VAR name="unqueriedtable"></div>
+    <div></div>
+    <div id ="result">
+        <div id="resulttable"><TMPL_VAR name="queriedtable"></div>
+        <div id="loading" class="loading opaque center">
+        <div class="waves"></div>
+        <div class="wave"></div>
+        <div class="wave"></div>
+        <div class="wave"></div>
+        <div class="wave"></div>
+        <div class="wave"></div>
+        <div class="wave"></div>
+        <div class="wave"></div>
+        <div class="wave"></div>
+        <div class="wave"></div>
+    </div></div>
+    <!-- <div class = "item a">7</div>
+    <div class = "item b">8</div> -->
+    <!-- <div class = "item a">9</div> -->
+</div>

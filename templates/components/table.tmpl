@@ -1,0 +1,38 @@
+
+<style>
+    table, th, td {
+        border: 1px solid slategray;
+    }
+    table {
+        overflow-y:scroll;
+        overflow-x:scroll;
+        width: 35vw;
+        height: 35vh; 
+        display:block;
+    }
+    .th.fixed {
+    top: 0;
+    z-index: 2;
+    position: sticky;
+    background-color: white;
+ }
+</style>
+
+<div style="padding: 20px">
+    <div><TMPL_VAR name="Tablename"></div>
+    <div> Queried by: <TMPL_VAR name="ranStatement"></div>
+    <table> 
+        <form action="" method="GET"> 
+            <tr>
+                <TMPL_LOOP NAME="HEADERS">
+                    <th style="padding: 15px; position: sticky; top: 0; background-color: white; border-bottom: 2px solid black;"><b><TMPL_VAR NAME="HName"></b></td>
+                </TMPL_LOOP>
+            </tr>
+                <TMPL_LOOP NAME="rows">
+                    <TMPL_VAR NAME="row">
+                </TMPL_LOOP>
+            <!-- <input type="submit" value="Test and Save" class="transition duration-500 rounded border-r-4 px-2 pt-1 pb-2 hover:text-slate-500 hover:bg-slate-50 hover:cursor-pointer <TMPL_IF NAME=active> bg-slate-50 <TMPL_ELSE> text-slate-50 bg-slate-500 </TMPL_IF>" href="%link%"></input> -->
+        </form> 
+    </table> 
+    <div>Results: <TMPL_VAR name="resultcount"></div>
+</div>
