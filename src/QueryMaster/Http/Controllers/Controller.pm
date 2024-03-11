@@ -26,38 +26,33 @@ sub welcome {
     my $self = shift;
     my $request = shift;
 
-    app()->pushToStack('scripts', servicePath('querymaster') . '/script.js');
+    my $sp = servicePath('querymaster');
 
+    app()->pushToStack('scripts', "$sp/scripts/state.js");
+    app()->pushToStack('scripts', "$sp/scripts/view.js");
+    app()->pushToStack('scripts', "$sp/scripts/query.js");
+    app()->pushToStack('styles', {path => "$sp/styles/style1.css", id => "querymaster:style1"});
+    app()->pushToStack('styles', {path => "$sp/styles/style2.css", id => "querymaster:style2"});
     my $query = $request->{query};
     my $shoprepo = QueryMaster::CosmoShopRepository->new();
-
-    # Unqueried Table on the left
-    my $allModels = $shoprepo->all();
-    my $fulltable = QueryMaster::Components::Table->new($shoprepo->columns, "Full Table", "SELECT * FROM " . $shoprepo->{tablename} . ";");
-    $fulltable->fillRows($allModels);
-
     # # Queried Table on the left
-    my $queriedtable = "Start a query to show results!";
-    if($query) {
-        my $queryresults = $shoprepo->runQuery($query);
-        $queriedtable = QueryMaster::Components::Table->new($shoprepo->columns, "Queried Table", $query->fullStatement($shoprepo->{tablename}));
-        $queriedtable->fillRows($queryresults);
-        $queriedtable = $queriedtable->output();
-    }
+    my $queriedtable = $request->{table} || "Start a query to show results!";
 
     my $templatesfolder = getFolder() . "../../../../templates";
 
     #Query Builder
-    my $querybuilder = QueryMaster::Components::Querybuilder->new();
+    my $querybuilder = QueryMaster::Components::Querybuilder->new($shoprepo->{lastStatement});
     $querybuilder->dropdownoperators();
     $querybuilder->fillDropdowns($shoprepo->columns());
+    # Fill QueryBuilder filters
+    $querybuilder->addOptionRow("shopart", $shoprepo->allShopArten());
+    $querybuilder->addOptionRow("shopversion", $shoprepo->allShopVersions());
 
     # Build and fill Master Layout
     my $layout = HTML::Template->new(filename => $templatesfolder . "/layouts/master.tmpl");
     $layout->param(
-        querybuilder => $querybuilder->output(),
-        unqueriedtable => $fulltable->output(),
-        queriedtable => $queriedtable
+        querybuilder => $querybuilder->output($request->{filter}),
+        queriedtable => $queriedtable->output()
     );
 
     my $template = &_::template('querymaster::welcome', {

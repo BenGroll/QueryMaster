@@ -33,7 +33,6 @@ sub completeConditionCount {
         my $field = "field$index";
         my $operator = "operator$index";
         my $value ="value$index";
-        
         if(
             grep (/^$concatenator/, @paramnames)
             && grep( /^$field/, @paramnames)
@@ -64,7 +63,7 @@ sub lookupTable {
         },
         operator => {
             #default
-            0 => "=",
+            0 => "LIKE",
             1 => "<",
             2 => ">"
         }
@@ -102,11 +101,11 @@ sub toSql {
     # DISTINCT WORKS DIFFERENT THAN I THOUGHT; THIS DOES NOTHING
     $statement .= $self->lookupSecureKeyword("distinct", $self->{distinct});
     $statement .= " FROM TABLENAMEPLCHLDR ";
-
     for(my $i = 0; $i < $conditions; $i++) {
         $statement .= $self->lookupSecureKeyword("concatenator", $self->{"concatenator$i"}) . " ";
         $statement .= $self->{"field$i"} . " ";
-        $statement .= $self->lookupSecureKeyword("operator", $self->{"operator$i"}) . " ";
+        my $operator = $self->lookupSecureKeyword("operator", $self->{"operator$i"}) . " "; 
+        $statement .= $operator;
         $statement .= "? "; # Dont use actual value because its a binding
     }
     chop($statement);
@@ -120,32 +119,15 @@ sub getBindings {
 
     my @bindings = ();
     for (my $i = 0; $i < $conditions; $i++) {
-        push(@bindings, $self->{"value$i"});
+        if($self->{"operator$i"} == 0) {
+            $self->{"value$i"} = "%" . $self->{"value$i"} . "%";
+            push(@bindings, $self->{"value$i"});
+            
+        } else {
+            push(@bindings, $self->{"value$i"});
+        }
     }
-
     return \@bindings;
 }
-
-# Replace with more efficient 
-sub fullStatement {
-    my $self = shift;
-    my $tablename = shift || "TABLENAME";
-
-    my $conditions = $self->completeConditionCount();
-    
-    my $statement = "SELECT ";
-
-    $statement .= $self->lookupSecureKeyword("distinct", $self->{distinct});
-    $statement .= " FROM $tablename ";
-    for(my $i = 0; $i < $conditions; $i++) {
-        $statement .= $self->lookupSecureKeyword("concatenator", $self->{"concatenator$i"}) . " ";
-        $statement .= $self->{"field$i"} . " ";
-        $statement .= $self->lookupSecureKeyword("operator", $self->{"operator$i"}) . " ";
-        $statement .= $self->{"value$i"} . " ";
-    }
-    chop($statement);
-    return "$statement;";
-}
-
 
 1;

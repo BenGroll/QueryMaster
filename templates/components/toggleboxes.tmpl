@@ -1,0 +1,12 @@
+<div style="border-bottom: 1px dotted slategray;">
+<input type="checkbox" id="toggleFilter_<TMPL_VAR name='parametername'>" name="toggleFilter_<TMPL_VAR name='parametername'>" <TMPL_VAR name="filterChecked">>
+<label for="toggleFilterShopversions">Filter <TMPL_VAR name='parametername'>? (Applies to 'Apply' and the Searchbar)</label>
+<div name="<TMPL_VAR name='parametername'>boxes" style="flex-direction: row;">
+    <TMPL_LOOP name="boxes">
+        <div>
+            <input type="checkbox" id="<TMPL_VAR name='parametername'>box_<TMPL_VAR name='boxvalue'>" name="<TMPL_VAR name='boxvalue'>" <TMPL_VAR name="checked">>
+            <label for="<TMPL_VAR name='boxvalue'>"><TMPL_VAR name='boxvalue'></label>
+        </div>
+        </TMPL_LOOP>
+    </div>
+</div>

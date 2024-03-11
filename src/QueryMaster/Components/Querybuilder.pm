@@ -5,14 +5,23 @@ use warnings;
 
 use Data::Dumper;
 use QueryMaster::Query;
+use JSON;
 
 sub new {
     my $class = shift;
+    my $lastStatement = shift;
     
 
     my $templatesfolder = getFolder() . "../../../templates";
 
-    my $self = {template => HTML::Template->new(filename => "$templatesfolder/components/querybuilder.tmpl")};
+    my @emptyarray = ();
+
+    my $self = {
+        templatesfolder => $templatesfolder,
+        template => HTML::Template->new(filename => "$templatesfolder/components/querybuilder.tmpl"),
+        lastStatement => $lastStatement,
+        options => \@emptyarray  
+    };
     bless($self, $class);
 }
 
@@ -29,8 +38,6 @@ sub dropdownoperators {
             operator => $operators->{$operatorid}
         });
     }
-    # die Dumper($operators->{0});
-    # die Dumper(@operatorsdata);
     return \@operatorsdata;
 }
 
@@ -49,6 +56,9 @@ sub fillDropdowns {
     my $self = shift;
     my $fields = shift;
 
+    # bypass
+    return $self;
+
     $self->{template}->param(
         operators => $self->dropdownoperators(),
         fields => $self->dropdownfields($fields)
@@ -56,8 +66,68 @@ sub fillDropdowns {
     return $self;
 }
 
+sub addOptionRow {
+    my $self = shift;
+    my $title = shift;
+    my $values = shift;
+
+    my @boxdata = ();
+    foreach my $value (@$values) {
+        my $data = {boxvalue => $value, parametername => $title};
+        push(@boxdata, $data);
+    }
+    my $options = $self->{options};
+    push(@$options, \@boxdata);
+    $self->{options} = $options;
+    return $self;
+}
+
 sub output {
     my $self = shift;
+    my $filter = shift;
+
+    my @emptyarray = ();
+
+    my $options = $self->{options};
+
+    my $totalfiltercheckboxesdata = {};
+
+    my @optionsdata = ();
+    foreach my $option (@$options) {
+        my $optionname = $option->[0]->{'parametername'};
+        my $thisFilterActiveInPreviousSite = exists $filter->{$optionname} ? 'checked' : '';
+
+        my $title = $option->[0]->{parametername};
+        my $template = HTML::Template->new(filename => $self->{templatesfolder} . "/snippets/collapsible.tmpl");
+        my @dataforjson = ();
+        my @thisparamcheckboxesdata = ();
+        foreach my $checkbox (@$option) {
+            my $selected = 0;
+            if($thisFilterActiveInPreviousSite && ($checkbox->{boxvalue} ~~ $filter->{$optionname})) {
+                $selected = "selected";
+            }
+            my $data = {
+                optionvalue => $checkbox->{boxvalue},
+                selected => $selected
+            };
+            push(@thisparamcheckboxesdata, $data);
+            push(@dataforjson, $checkbox->{boxvalue});
+        }
+        $totalfiltercheckboxesdata->{$title} = \@dataforjson;
+        $template->param(
+            parametername => $title,
+            options => \@thisparamcheckboxesdata,
+            # filterchecked => $thisFilterActiveInPreviousSite
+        );
+        push(@optionsdata, {option => $template->output()});
+    }
+    
+
+    $self->{template}->param(
+        # ranstatement => $self->{ranstatement},
+        optionsCheckboxes => \@optionsdata,
+        filtercheckboxesdata => encode_json($totalfiltercheckboxesdata)
+    );
 
     return $self->{template}->output();
 }

@@ -1,0 +1,189 @@
+/* Styles for the Master Layout */
+.whole {
+    min-width: 70vw;
+    max-width: 70vw;
+}
+.grid {
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: 1fr 5fr;
+}
+/* Style for the Loading Indicator */
+.loading {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.loading .wave {
+    width: 5px;
+    height: 100px;
+    background: slategray;
+    margin: 10px;
+    animation: wave 1s linear infinite;
+    border-radius: 20px;
+}
+.loading .wave:nth-child(2) {
+    animation-delay: 0.1s;
+}
+.loading .wave:nth-child(3) {
+    animation-delay: 0.2s;
+}
+.loading .wave:nth-child(4) {
+    animation-delay: 0.3s;
+}
+.loading .wave:nth-child(5) {
+    animation-delay: 0.4s;
+}
+.loading .wave:nth-child(6) {
+    animation-delay: 0.5s;
+}
+.loading .wave:nth-child(7) {
+    animation-delay: 0.6s;
+}
+.loading .wave:nth-child(8) {
+    animation-delay: 0.7s;
+}
+.loading .wave:nth-child(9) {
+    animation-delay: 0.8s;
+}
+.loading .wave:nth-child(10) {
+    animation-delay: 0.9s;
+}
+.loading .info {
+        color: slategray;
+}
+
+@keyframes wave {
+    0% {
+        transform: scale(0);
+    }
+    50% {
+        transform: scale(1);
+    }
+    100% {
+        transform: scale(0);
+    }
+}
+/* Global styles */
+.opaque {
+    display: none;
+}
+.pointercursor {
+    cursor: pointer;
+}
+/* Styles for QueryBuilder */
+.collapsible {
+    background-color: #eee;
+    color: #444;
+    padding: 18px;
+    width: 10%;
+    border: none;
+    text-align: left;
+    outline: none;
+    font-size: 15px;
+}
+
+
+.collapsible:after {
+    content: '\02795'; /* Unicode character for "plus" sign (+) */
+    font-size: 13px;
+    color: white;
+    float: right;
+    margin-left: 5px;
+}
+.active:after {
+    content: "\2796"; /* Unicode character for "minus" sign (-) */
+}
+/* Add a background color to the button if it is clicked on (add the .active class with JS), and when you move the mouse over it (hover) */
+.active, .collapsible:hover {
+background-color: #ccc;
+}
+#select {
+    background-color: #ccc;
+    color: #444;
+    text-align: center;
+}
+
+select[multiple]:focus option:checked {
+    background: #ccc;
+}
+/* Style the collapsible content. Note: hidden by default */
+.content {
+    padding: 0 18px;
+    background-color: white;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.2s ease-out;
+} 
+.singlefilterbuilder {
+    border: 1px solid slategray;
+    border-radius: 2px;
+    display:flex;
+    flex-direction: row;
+}
+.filterelem {
+    padding:    10px;
+    display:    flex;
+    flex-direction: column;
+}
+
+/* Styles for the Table */
+table, th, td {
+    border: 1px solid slategray;
+}
+th {
+    padding: 15px; 
+    position: sticky; 
+    top: 0; 
+    background-color: white; 
+    border-bottom: 2px solid black;
+    cursor: pointer;
+}
+table {
+    overflow-y:scroll;
+    overflow-x:scroll;
+    width: 70vw;
+    height: 50vh; 
+    display:block;
+}
+th.fixed {
+    top: 0;
+    z-index: 1;
+    position: sticky;
+    background-color: white;
+}
+
+.sortable:not(.sort-ascending) > .ascend-indicator {
+    visibility: hidden;
+}
+
+.sortable:not(.sort-descending) > .descend-indicator {
+    visibility: hidden;
+}
+.oneline {
+    max-width: 15vw;
+    max-height: 60px;
+    white-space: nowrap;
+    overflow: hidden;
+    /* text-overflow: ellipsis; */
+}
+.expanded {
+    max-height: 100%;
+    max-width: 15vw;
+    overflow: hidden;
+}
+.square {
+    width: 2vw;
+    height: 2vw;
+}
+.hide {
+    display: none;
+}
+.expandButton .open {
+    content : '\02795';
+}
+.expandButton .closed {
+    content: '\02796';
+}

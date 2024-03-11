@@ -1,119 +1,15 @@
-<style>
-    .singlefilterbuilder {
-        border: 1px solid slategray;
-        border-radius: 2px;
-        display:flex;
-        flex-direction: row;
-    }
-    .filterelem {
-        padding:    10px;
-        display:    flex;
-        flex-direction: column;
-    }
-    
-</style>
-
-<div class="singlefilterbuilder">
-    <div class="fieldselector filterelem">
-        Field:
-        <select name="Field" id="fieldselect">
-            <TMPL_LOOP name="fields">
-                <option value="<TMPL_VAR name='fieldname'>"><TMPL_VAR name="fieldname"></option>
-            </TMPL_LOOP>
-        </select>
-    </div>
-    <div class="operatorselector filterelem">
-        Operator:
-        <select name="operator" id="operatorselect">
-            <TMPL_LOOP name="operators">
-                <option value="<TMPL_VAR name='operatorid'>">"<TMPL_VAR name="operator">"</option>
-            </TMPL_LOOP>
-        </select>
-    </div>
-    <div class="value filterelem">
-        Value:
-        <input type="text" id="value" name="value" style="border: 1px solid slategray; border-radius: 2px;">
-    </div>
-    <div class="addfilterbutton" id="addfilterbutton">
-        <button type="button" onclick="addFilter()">Click here to add a filter</button> 
-    </div>
-</div>
 <div class ="filters" style="border-top: 1px solid slategray;">
     Active Filters:
     <div class="filterlist" id="filterlist">
 
     </div>
 </div>
-<div class="options" style="border-top: 1px solid slategray; border-bottom: 1px solid slategray;">
-    Options TBA
-    <!-- <div class="option">
-        <input type="checkbox" id="query[distinct]" name="query[distinct]" value=0>
-        <label for="query[distinct]">Only include distinct Results</label>
-    </div> -->
+<div class="options" style="border-top: 1px solid slategray; border-bottom: 1px solid slategray; display: flex; flex-direction: row;">
+    <TMPL_LOOP name="optionsCheckBoxes">
+        <TMPL_VAR name="option">
+    </TMPL_LOOP>
 </div>
-<button type="button" onclick="console.log(runQuery())">Apply Filter(s)</button>
-
-<script defer>
-
-function removeFilter() {
-    //todo
-}
-
-var filters = [];
-async function addFilter() {
-    const field = document.getElementById("fieldselect").value;
-    const operator = document.getElementById("operatorselect").value;
-    const value = document.getElementById("value").value;
-    // alert(field + "\n" + operator + "\n" + value);
-    // alert("filtertemplate&field="+field+"&operator="+operator+"&value="+value+"&idx="+filters.length);
-    const text = await getSnippet("filtertemplate&field="+field+"&operator="+operator+"&value="+value+"&idx="+filters.length);
-    const filterlist = document.getElementById("filterlist");
-    filterlist.innerHTML += text;
-    if(filters.length != 0) {
-        const concatenatorselector = document.getElementById(`concatenator${filters.length - 1}`);
-        concatenatorselector.classList.remove("opaque");
-    }
-    filters.push({"field" : field, "operator": operator, "value" : value, "idx" : filters.length});
-    console.log(filters);
-}
-
-async function runQuery() {
-    const resulttable = document.getElementById("resulttable");
-    const loading = document.getElementById("loading");
-
-    resulttable.classList.add("opaque");
-    loading.classList.remove("opaque");
-
-    var query = "";
-    filters.forEach(element => {
-        var idx = element["idx"];
-        var concat = 0;
-        if(idx != 0) {
-            // Add Concatenator logic here
-            const concatenatorselector = document.getElementById(`concatenator${idx - 1}`);
-            concat = concatenatorselector.value;
-            query += "&";
-        }
-        query += `concatenator${idx}=${concat}&`;
-        query += `field${idx}=${element["field"]}&`;
-        query += `operator${idx}=${element["operator"]}&`;
-        query += `value${idx}=${element["value"]}`;           
-    });
-    // alert(query);
-    var test = await fetch(`querymaster/query?${query}`);
-    resulttable.innerHTML = await test.text();
-    loading.classList.add("opaque");
-    resulttable.classList.remove("opaque");
-
-    
-}
-
-async function getSnippet(name) {
-    // var output;
-    var test = await fetch('querymaster/htmlsnippets?name=' + name);
-    // return output;
-    return await test.text();
-    
-}
-
+<input type="text" placeholder="Search all columns..." id="searchField" value="<TMPL_VAR name='lastsearch'>" oninput="searchAllColumns(this.value);"><button type="button" id="searchinputbutton" onclick="searchAllColumns(document.getElementById('searchField').value)"><i class="fa fa-search"></i></button>
+<script>
+  filtercheckboxesdata = JSON.parse('<TMPL_VAR name="filtercheckboxesdata">');
 </script>

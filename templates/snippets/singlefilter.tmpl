@@ -2,9 +2,7 @@
     <div style="margin: 10px; border: 1px solid slategray; border-radius: 3px;">
         <TMPL_VAR name="field"> <TMPL_VAR name="operator"> <TMPL_VAR name="value"> <button type="button" style="align-self: flex-end; border: 1px solid slategrey; border-radius: 2px; margin: 2%;" onclick="removeFilter(this.id)">Remove this Filter</button>
     </div>
-    <select name="concatenator" id="concatenator<TMPL_VAR name='idx'>" class="opaque">
-        <TMPL_LOOP name="concatenators">
-            <option value="<TMPL_VAR name='concatenatorid'>">"<TMPL_VAR name="concatenator">"</option>
-        </TMPL_LOOP>
-    </select>
+    <div style="border-radius: 3%; border: 1px solid slategray">
+        AND
+    </div>
 </div>

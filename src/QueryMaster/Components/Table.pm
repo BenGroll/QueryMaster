@@ -13,13 +13,13 @@ sub new {
     my $class = shift;
     my $columnnames = shift or die "No Columnname-List specified;";
     my $tablename = shift or die "No Tablename specified";
-    my $ranstatement = shift;
+    my $lastsearch = shift || "";
 
     my $self = {
         template => HTML::Template->new(filename => "$templatesfolder/components/table.tmpl"),
         columnnames => $columnnames,
-        statement => $ranstatement,
-        tablename => $tablename
+        tablename => $tablename,
+        lastsearch => $lastsearch
         };
     bless($self, $class);
 }
@@ -47,8 +47,8 @@ sub output {
 
     $self->{template}->param(
         headers => $self->headers(),
-        ranstatement => $self->{statement},
-        tablename => $self->{tablename},
+        tablename => "Table: " . $self->{tablename},
+        # lastsearch => $self->{lastsearch},
     );
     return $self->{template}->output();
 }
