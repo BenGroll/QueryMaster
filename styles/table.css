@@ -1,0 +1,63 @@
+
+/* Styles for the Table */
+table, th, td {
+    border: 1px solid slategray;
+}
+th {
+    padding: 15px; 
+    position: sticky; 
+    top: 0; 
+    background-color: white; 
+    border-bottom: 2px solid black;
+    cursor: pointer;
+}
+table {
+    overflow-y:scroll;
+    overflow-x:scroll;
+    width: 70vw;
+    height: 50vh; 
+    display:block;
+}
+th.fixed {
+    top: 0;
+    z-index: 1;
+    position: sticky;
+    background-color: white;
+}
+
+.qm-sortable:not(.qm-sort-ascending) > .qm-ascend-indicator {
+    visibility: hidden;
+}
+
+.qm-sortable:not(.qm-sort-descending) > .qm-descend-indicator {
+    visibility: hidden;
+}
+.qm-oneline {
+    max-width: 15vw;
+    max-height: 60px;
+    white-space: nowrap;
+    overflow: hidden;
+    /* text-overflow: ellipsis; */
+}
+.qm-expanded {
+    max-height: 100%;
+    max-width: 15vw;
+    overflow: hidden;
+}
+.qm-square {
+    width: 2vw;
+    height: 2vw;
+}
+.qm-hide {
+    display: none;
+}
+.qm-expandButton .qm-open {
+    content : '\02795';
+}
+.qm-expandButton .qm-closed {
+    content: '\02796';
+}
+
+.qm-hidden {
+    visibility: hidden;
+}

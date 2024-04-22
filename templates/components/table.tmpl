@@ -1,15 +1,12 @@
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <div style="padding: 20px">
-    <div><TMPL_VAR name="Tablename"></div>
     <table> 
         <form action="" method="GET"> 
             <tr>
                 <TMPL_LOOP NAME="HEADERS">
-                    <th class="sortable" id="<TMPL_VAR name='HName'>" style="display: flexbox; flex-direction: column-reverse;" onclick="toggleSort(this);">
-                        <span class="ascend-indicator">↑</span>
+                    <th class="qm-sortable" id="<TMPL_VAR name='HName'>" style="display: flexbox; flex-direction: column-reverse;" onclick="toggleSortState(this);">
+                        <span class="qm-ascend-indicator">↑</span>
                         <b><TMPL_VAR NAME="HName"></b>
-                        <span class="descend-indicator">↓</span>
+                        <span class="qm-descend-indicator">↓</span>
                     </th>
                 </TMPL_LOOP>
             </tr>
@@ -19,9 +16,64 @@
             <!-- <input type="submit" value="Test and Save" class="transition duration-500 rounded border-r-4 px-2 pt-1 pb-2 hover:text-slate-500 hover:bg-slate-50 hover:cursor-pointer <TMPL_IF NAME=active> bg-slate-50 <TMPL_ELSE> text-slate-50 bg-slate-500 </TMPL_IF>" href="%link%"></input> -->
         </form> 
     </table> 
-    <div>Results: <TMPL_VAR name="resultcount"></div>
+    <div style="display: flex; flex-direction: row; justify-content: space-between;">
+        <div>Results: <TMPL_VAR name="resultcount"></div>
+            <div id="paginator" class="<TMPL_IF name='limit'><TMPL_ELSE>qm-hidden</TMPL_IF>"> 
+            <div style="display: flex; flex-direction: row; justify-content: space-evenly;">
+                <span>Page: </span>
+                <button id="pagedown" onclick="if(setPaginator(tablepage - 1)){runQuery();}" class="<TMPL_IF name='pageminimumreached'>qm-hidden</TMPL_IF>"> << </button>
+                <span id="currentPage">%tablepage%</span>
+                <button id="pageup" onclick="if(setPaginator(tablepage + 1)){runQuery();}" class="<TMPL_IF name='pagemaximumreached'>qm-hidden</TMPL_IF>"> >> </button>
+            </div>
+        </div>
+    </div>
 </div>
 <script>
-sortBy = '<TMPL_VAR name="lastSortNameParameter">';
-sortOrder = '<TMPL_VAR name="lastSortOrder">'; 
+    var tablesSortBy = '%lastSortName%';
+    var tablesSortOrder = '%lastSortOrder%';
+    var tablepage = parseInt("%tablepage%");
+    var tablelimit = "%limit%";
+    var tableresults = "%resultcount%";
+    
+    if(tablepage <= 1) {
+        document.getElementById("pagedown").classList.add("qm-hidden");
+    }
+    
+    //Style Sortables
+    var sortables = document.getElementsByClassName("qm-sortable");
+    function restyleAllSortables(by, order) {
+        Array.from(sortables).forEach((element) => {
+            if(element.id == by) {
+                if(order === "ascending") {
+                    element.classList.add("qm-sort-ascending");
+                    element.classList.remove("qm-sort-descending");
+                } else {
+                    element.classList.remove("qm-sort-ascending");
+                    element.classList.add("qm-sort-descending");
+                }
+            } else {
+                element.classList.remove("qm-sort-ascending");
+                element.classList.remove("qm-sort-descending");
+            }
+        });
+    }
+
+    function isOverflown(element){
+        var overflow = element.scrollHeight > element.clientHeight || element.scrollWidth > element.clientWidth; 
+        console.log("Overflow: " + overflow + " @ " + element);
+        return overflow;
+    }
+    
+    function restyleOverflows() {
+        var expandButtons = document.getElementsByClassName("qm-oneline");
+        Array.from(expandButtons).forEach((element) => {
+            if (isOverflown(element)) {
+                element.classList.add("qm-pointercursor");
+            }
+        });
+    }
+
+    restyleAllSortables(tablesSortBy, tablesSortOrder);
+    restyleOverflows();
+
 </script>

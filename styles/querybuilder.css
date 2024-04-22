@@ -1,0 +1,55 @@
+/* Styles for QueryBuilder */
+.qm-collapsible {
+    background-color: #eee;
+    color: #444;
+    padding: 18px;
+    width: 10%;
+    border: none;
+    text-align: left;
+    outline: none;
+    font-size: 15px;
+}
+
+
+.qm-collapsible:after {
+    content: '\02795'; /* Unicode character for "plus" sign (+) */
+    font-size: 13px;
+    color: white;
+    float: right;
+    margin-left: 5px;
+}
+.qm-active:after {
+    content: "\2796"; /* Unicode character for "minus" sign (-) */
+}
+/* Add a background color to the button if it is clicked on (add the .active class with JS), and when you move the mouse over it (hover) */
+.qm-active, .qm-collapsible:hover {
+background-color: #ccc;
+}
+#select {
+    background-color: #ccc;
+    color: #444;
+    text-align: center;
+}
+
+select[multiple]:focus option:checked {
+    background: #ccc;
+}
+/* Style the collapsible content. Note: hidden by default */
+.qm-content {
+    padding: 0 18px;
+    background-color: white;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.2s ease-out;
+} 
+.qm-singlefilterbuilder {
+    border: 1px solid slategray;
+    border-radius: 2px;
+    display:flex;
+    flex-direction: row;
+}
+.qm-filterelem {
+    padding:    10px;
+    display:    flex;
+    flex-direction: column;
+}

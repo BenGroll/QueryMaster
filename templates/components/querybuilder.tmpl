@@ -1,15 +1,22 @@
-<div class ="filters" style="border-top: 1px solid slategray;">
-    Active Filters:
-    <div class="filterlist" id="filterlist">
-
-    </div>
-</div>
+<div>
 <div class="options" style="border-top: 1px solid slategray; border-bottom: 1px solid slategray; display: flex; flex-direction: row;">
     <TMPL_LOOP name="optionsCheckBoxes">
         <TMPL_VAR name="option">
     </TMPL_LOOP>
 </div>
-<input type="text" placeholder="Search all columns..." id="searchField" value="<TMPL_VAR name='lastsearch'>" oninput="searchAllColumns(this.value);"><button type="button" id="searchinputbutton" onclick="searchAllColumns(document.getElementById('searchField').value)"><i class="fa fa-search"></i></button>
+<div style="display: flex; flex-direction: row; justify-content: space-around;">
+    <div>
+        <input type="text" placeholder="Search all columns..." id="searchField" value="<TMPL_VAR name='lastsearch'>" oninput="runQuery();"><button type="button" id="searchinputbutton" onclick="runQuery();"><i class="fa fa-search"></i></button>
+    </div>
+    <div>
+        <span>Pagination Limit: </span>
+        <select id="limitselect" onchange="if(setLimit(this.value)) {runQuery();}">
+            <option value=null>-- no limit --</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+        </select>
+</div></div>
 <script>
-  filtercheckboxesdata = JSON.parse('<TMPL_VAR name="filtercheckboxesdata">');
+    var filternames = JSON.parse('%filters%');
 </script>

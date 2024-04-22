@@ -1,5 +1,5 @@
-<button type="button" class="collapsible" id="select<TMPL_VAR name='parametername'>button">Select <TMPL_VAR name='parametername'></button>
-<div class="content">
+<button type="button" class="qm-collapsible" id="select<TMPL_VAR name='parametername'>button">Select <TMPL_VAR name='parametername'></button>
+<div class="qm-content">
     <select class="select<TMPL_VAR name='parametername'>" id="select<TMPL_VAR name='parametername'>" onchange="runQuery()" multiple >
         <TMPL_LOOP name="options">
             <option value="<TMPL_VAR name='optionvalue'>" <TMPL_VAR name="selected">><TMPL_VAR name='optionvalue'></option>

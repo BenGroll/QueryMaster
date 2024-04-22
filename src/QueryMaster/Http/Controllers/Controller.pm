@@ -28,31 +28,42 @@ sub welcome {
 
     my $sp = servicePath('querymaster');
 
-    app()->pushToStack('scripts', "$sp/scripts/state.js");
+    app()->pushToStack('styles', {path => "$sp/styles/global.css", id => "querymaster:global"});
+    app()->pushToStack('styles', {path => "$sp/styles/layout.css", id => "querymaster:layout"});
+    app()->pushToStack('styles', {path => "$sp/styles/loading.css", id => "querymaster:loading"});
+    app()->pushToStack('styles', {path => "$sp/styles/querybuilder.css", id => "querymaster:querybuilder"});
+    app()->pushToStack('styles', {path => "$sp/styles/table.css", id => "querymaster:table"});
     app()->pushToStack('scripts', "$sp/scripts/view.js");
     app()->pushToStack('scripts', "$sp/scripts/query.js");
-    app()->pushToStack('styles', {path => "$sp/styles/style1.css", id => "querymaster:style1"});
-    app()->pushToStack('styles', {path => "$sp/styles/style2.css", id => "querymaster:style2"});
-    my $query = $request->{query};
+
+    my $conf = app()->getServiceConfig('querymaster', 'app.pl');
+
+    my $query = $request->{fullStatement} ;
+
     my $shoprepo = QueryMaster::CosmoShopRepository->new();
-    # # Queried Table on the left
-    my $queriedtable = $request->{table} || "Start a query to show results!";
+    
+    my $models = $shoprepo->runStatement($query, $request->{bindings});
+    # Create table outline and carry over the last query's parameters
+    my $table = QueryMaster::Components::Table->new(
+        columnnames => $shoprepo->columns(),
+        tablename => $shoprepo->{tablename},
+        lastsearch => $request->{searchvalue},
+        orderedBy => $request->{params}->{sortBy},
+        order => $request->{params}->{sortOrder},
+        limit => $request->{params}->{limit},
+        page => $request->{params}->{page});
 
-    my $templatesfolder = getFolder() . "../../../../templates";
-
+    $table->fillRows($models);
+    
     #Query Builder
-    my $querybuilder = QueryMaster::Components::Querybuilder->new($shoprepo->{lastStatement});
-    $querybuilder->dropdownoperators();
-    $querybuilder->fillDropdowns($shoprepo->columns());
-    # Fill QueryBuilder filters
-    $querybuilder->addOptionRow("shopart", $shoprepo->allShopArten());
-    $querybuilder->addOptionRow("shopversion", $shoprepo->allShopVersions());
+    my $querybuilder = QueryMaster::Components::Querybuilder->new($shoprepo->{lastStatement}, $conf->{filterColumns});
 
     # Build and fill Master Layout
-    my $layout = HTML::Template->new(filename => $templatesfolder . "/layouts/master.tmpl");
+    my $templatesfolder = getFolder() . "../../../../templates";
+    my $layout = HTML::Template->new(filename => $templatesfolder . "/layouts/master.tmpl", vanguard_compatibility_mode => 1);
     $layout->param(
-        querybuilder => $querybuilder->output($request->{filter}),
-        queriedtable => $queriedtable->output()
+        querybuilder => $querybuilder->output($conf->{filterColumns}),
+        queriedtable => $table->output()
     );
 
     my $template = &_::template('querymaster::welcome', {
@@ -91,4 +102,5 @@ sub getFolder {
         0, 
         scalar @{[split(/\//, __FILE__)]} -1)) . "/";
 }
+
 1;

@@ -8,84 +8,135 @@ use Foundation::Appify;
 use HTML::Template;
 use Http::Route;
 use JSON;
-use QueryMaster::AjaxResources;
 use QueryMaster::Http::Controllers::Controller;
-use QueryMaster::Query;
-use QueryMaster::QueryFilter;
 
-our $buildQueryFromParams = sub {
+# Middlewares
+sub queryInit {
     my $request = shift;
     my $next = shift;
-    
-    my $params = \%{$request->Vars};
-    my $queryparams = {};
+
+    $request->{params} = \%{$request->Vars};
+
+    $request->{fullStatement} = "SELECT * FROM cosmoshop";
+    my @bindings = ();
+    $request->{bindings} = \@bindings;
+
+    return &$next($request);
+};
+
+sub queryAttachSearchValue {
+    my $request = shift;
+    my $next = shift;
+
+    my $searchvalue = $request->{params}->{searchvalue};
+    if (!$searchvalue || $searchvalue eq '') {
+        return &$next($request);
+    }
+    my $shoprepo = QueryMaster::CosmoShopRepository->new();
+    my $columnnames = $shoprepo->columns();
+
+    my $query = $request->{fullStatement};
+
+    if ($request->{params}->{searchvalue}) {
+        $query .= " WHERE (";
+        my $i = 0;
+        foreach my $columnname (@$columnnames) {
+            my $modifiedsearchvalue = "%". $request->{params}->{searchvalue} . "%";
+            $query  .= $i == 0 ? $columnname . ' LIKE "' . $modifiedsearchvalue. '"'
+                            : " OR " . $columnname . ' LIKE "' . $modifiedsearchvalue. '"';
+            # push(@bindings, "%"."$searchvalue"."%");
+            $i++;
+        }   
+        $query  .= " )";
+    }
+    $request->{fullStatement} = $query;
+    return &$next($request);
+};
+
+sub queryAttachFilters {
+    my $request = shift;
+    my $next = shift;
+
+    my $query = $request->{fullStatement};
+    my $params = $request->{params};
+    my $bindings = $request->{bindings};
+    # Filters (AND)
     my $filterparams = {};
     foreach my $key (keys %$params) {
-        if (index ($key, 'query') == 0) {
-            my @splitkeyname = split (/\[/, $key);
-            @splitkeyname = split(/\]/, @splitkeyname[1]); 
-            my $querykey = @splitkeyname[0];
-            $queryparams->{$querykey} = $params->{$key}
-        }
         if( index ($key, 'filter') == 0) {
             my @splitkeyname = split (/\[/, $key);
             @splitkeyname = split(/\]/, @splitkeyname[1]); 
             my $filterkey = @splitkeyname[0];
-            $filterparams->{$filterkey} = decode_json($params->{$key});
+            $filterparams->{$filterkey} = $params->{$key};
         }
     }
-
-    if (scalar (keys %$queryparams) > 0) {            
-        $request->{query} = QueryMaster::Query->new(%$queryparams);
-    } 
-    
-    $request->{filter} = QueryMaster::QueryFilter->new(%$filterparams); 
-    
-    return &$next($request); 
-};
-
-our $executeQueryOrSearch = sub {
-    my $request = shift;
-    my $next = shift;
-
-    my $shoprepo = QueryMaster::CosmoShopRepository->new();
-
-    my $models;
-    if($request->{query}) {
-        $models = $shoprepo->runQuery($request->{query});
-    } else {
-        my $params = \%{$request->Vars};
-        # die $params->{searchvalue};
-        if(exists $params->{searchvalue}) {
-            $models = $shoprepo->matchEverything($params->{searchvalue});
-            $request->{searchstring} = $params->{searchvalue};
+    if(scalar keys(%$filterparams) > 0) {
+        if(!$request->{params}->{searchvalue} || $request->{params}->{searchvalue} eq '') {
+            $query .= " WHERE (";
         } else {
-            $models = $shoprepo->runQuery(QueryMaster::Query->all());
+            $query .= " AND (";
         }
+        my $i = 0;
+        foreach my $filterkey (keys %$filterparams) {
+            my $realarray = decode_json($filterparams->{$filterkey});
+            # die Dumper($realarray);
+            my $array = "(";
+            foreach my $value (@$realarray) {
+                push (@$bindings, qq "$value");
+                if(substr($array, -1) eq "(") {
+                    $array .= " ? ";
+                } else {
+                    $array .= ", ? ";
+                }
+                
+            }
+
+            $array .= ")";
+            $query .= $i == 0 
+                    ? " $filterkey IN $array " 
+                    : "AND $filterkey IN $array ";
+            $i++;
+        };
+        $query .= ")";
     }
 
-    $request->{models} = $models;
-
+    $request->{fullStatement} = $query;
     return &$next($request);
 };
 
-our $buildTableAndApplyFilter = sub {
+
+sub querySortAndLimit {
     my $request = shift;
     my $next = shift;
     
-    # Apply filter to model list
-    my $models = $request->{filter}->applyTo($request->{models});
+    my $params = $request->{params};
+    my $query = $request->{fullStatement};
+    my $bindings = $request->{bindings};
 
-    my $shoprepo = QueryMaster::CosmoShopRepository->new();
-    $request->{shoprepo} = $shoprepo;
-            
-    my $table = QueryMaster::Components::Table->new($shoprepo->columns(), $shoprepo->{tablename}, $request->{searchstring});
-    $table->fillRows($models);
-
-    $request->{table} = $table;
+    if($params->{sortBy} && $params->{sortOrder}) {
+        $query .= " ORDER BY " . $params->{sortBy};
+        if($params->{sortOrder} eq "ascending") {
+            $query .= " ASC";
+        } else {
+            $query .= " DESC";
+        }
+    }
+    if($params->{limit}) {
+        push(@$bindings, 0 + $params->{limit});
+        $query .= " LIMIT ?";
+        if($params->{page}) {
+            push(@$bindings, ($params->{limit} * ($params->{page} - 1)));
+            $query .= " OFFSET ?";
+        }
+    }
+    
+    $query .= ";";
+    $request->{fullStatement} = $query;
 
     return &$next($request);
 };
+
+
 
 
 Http::Route::group({
@@ -97,10 +148,10 @@ Http::Route::group({
         
         # TODO: Implement service middleware classes instead of only using
         # TODO: closures.
-        $buildQueryFromParams,
-        $executeQueryOrSearch,
-        $buildTableAndApplyFilter
-
+        \&queryInit,
+        \&queryAttachSearchValue,
+        \&queryAttachFilters,
+        \&querySortAndLimit,
     ],
 
 }, sub {
@@ -121,8 +172,6 @@ Http::Route::group({
 
             my $request = shift;
 
-            
-
             # TODO: Implement default controller routing instead of creating
             # TODO: an instance of the controller class.
 
@@ -131,73 +180,25 @@ Http::Route::group({
             );
 
         }),
-        # Not currently in use, ajax-duplicate of '/'
-        # Used to fetch only a table for a query, not the whole site
-        Http::Route::get('/query', sub {
-
-            my $request = shift;
-
-
-            return $request->{table}->output();
-        }),
+        ## Only get a new Table, dont refresh page
         Http::Route::get('/search', sub {
 
             my $request = shift;
-            
-            my $models = $request->{filter}->applyTo($request->{models});
+            my $statement = $request->{fullStatement};
+            my $shoprepo = QueryMaster::CosmoShopRepository->new();
+            my $models = $shoprepo->runStatement($statement, $request->{bindings});
 
-            my $table = QueryMaster::Components::Table->new($request->{shoprepo}->columns(), $request->{shoprepo}->{tablename}, $request->{searchstring});
+            my $table = QueryMaster::Components::Table->new(
+                columnnames => $shoprepo->columns(),
+                tablename => $shoprepo->{tablename},
+                lastsearch => $request->{searchvalue},
+                orderedBy => $request->{params}->{sortBy},
+                order => $request->{params}->{sortOrder},
+                limit => $request->{params}->{limit},
+                page => $request->{params}->{page});
             $table->fillRows($models);
 
             return $table->output();
-        }),
-        # Used to get raw json data via ajax. Other routes return HTML
-        # Example call: '/ajax?resource=allShopVersions'
-        Http::Route::get('/ajax', sub {
-
-            my $request = shift;
-
-            my $queryparams = \%{$request->Vars};
-
-            my $resource = $queryparams->{resource};
-
-            my $ajaxresources = QueryMaster::AjaxResources->new();
-
-            return $ajaxresources->$resource();
-        }),
-
-        # Middleware to get the html snippets for ajax
-        Http::Route::get('/htmlsnippets', sub {
-
-            my $request = shift;
-
-            # TODO: Implement default controller routing instead of creating
-            # TODO: an instance of the controller class.
-
-            my $params = \%{$request->Vars};
-
-            my $templatename = $params->{template};
-
-
-            my $templatepath = join ('/', splice(@{[split(/\//, __FILE__)]},
-                                0, 
-                                scalar @{[split(/\//, __FILE__)]} -1)) . "/";
-            $templatepath .= "../templates/snippets/$templatename.tmpl";
-            my $template = HTML::Template->new(filename => $templatepath);
-
-            # my $params = \%{$request->Vars};
-
-            # my $lookuptable = QueryMaster::Query->lookupTable();
-            # my $operator = $lookuptable->{operator}->{$params->{operator}};
-
-            # $template->param(
-            #     idx  =>     $params->{idx},
-            #     field => $params->{field},
-            #     operator => $operator,
-            #     value => $params->{value},
-            # );
-
-            return $template->output();
         }),
 
         Http::Route::get('/messages/{id}', sub {

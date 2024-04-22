@@ -8,11 +8,9 @@ use Data::Dumper;
 use HTML::Template;
 use QueryMaster::CosmoShopModel;
 
-my $templatesfolder = getFolder() . "../../../templates";
-
 sub new {
     my $class = shift;
-    my $self = {template => HTML::Template->new(filename => "$templatesfolder/components/tablerow.tmpl")};
+    my $self = {template => HTML::Template->new(filename => getFolder() . "../../../templates/components/tablerow.tmpl"), vanguard_compatibility_mode => 1};
 
     bless($self, $class);
 }
@@ -24,7 +22,7 @@ sub fill {
     my $values = $model->{values};
     my @data = ();
     foreach my $value (@$values) {
-        push(@data, {CellValue => $value});
+        push(@data, {cellValue => $value});
     }
     $self->{template}->param(Cells => \@data);
     return $self;

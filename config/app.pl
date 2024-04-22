@@ -1,9 +1,3 @@
-return {
-
-    b => {
-
-        c => 'helloooooo!',
-
-    },
-
+{
+    filterColumns => ["shopart", "shopversion", "shoppath"],
 };

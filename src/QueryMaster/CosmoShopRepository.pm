@@ -24,14 +24,13 @@ sub columns {
 
     my $db = $self->{controller};
 
-    my $query = "SHOW COLUMNS IN " . $self->{tablename} . ";";
+    my $query = "SHOW COLUMNS FROM cosmoshop;" ;
     my $sth = $db->prepare($query);
     $sth->execute();
 
     my @indexes = ();
-    while (my @array = $sth->fetchrow_array) {
-        my $columnname = shift(@array);
-        push(@indexes, $columnname);
+    while (my @column = $sth->fetchrow_array) {
+        push(@indexes, shift(@column));
     }
     return \@indexes;
 }
@@ -53,98 +52,50 @@ sub modelsFromStatementHandler {
 sub all {
     my $self = shift;
 
-    return $self->runQuery(QueryMaster::Query->all());
+    return $self->runStatement("SELECT * FROM cosmoshop;");
 }
 
-sub matchEverything {
+sub allFromColumn {
     my $self = shift;
-    my $value = shift;
-
-    my $columns = $self->columns();
-
-    my @queries = ();
-    foreach my $column (@$columns) {
-        ## Query
-        my $query = QueryMaster::Query->new(concatenator0 => 0, field0 => $column, operator0 => 0, value0 => $value);
-        push(@queries, $query);
-    }
-
-    my @results = ();
-    foreach my $query (@queries) {
-        my $resultsOfThisQuery = $self->runQuery($query);
-        push(@results, @$resultsOfThisQuery);
-    }
-
-
-
-    return $self->onlyIndividuals(\@results);
+    my $columnname = shift or die "no column name";
+    return $self->runStatementNoModels("SELECT DISTINCT $columnname FROM cosmoshop");
 }
 
-sub onlyIndividuals {
+sub runStatementNoModels {
     my $self = shift;
-    my $results = shift;
-
-    my @ids = ();
-    my @individuals = ();
-    foreach my $queryresult (@$results) {
-        my $id = $queryresult->attributesAsHash()->{id};
-        unless($id ~~ @ids) {
-            push(@ids, $id);
-            push(@individuals, $queryresult);
-        }
-    }
-    return \@individuals;
-}
-
-sub allShopVersions {
-    my $self = shift;
-
-    my $models = $self->all();
-
-    my @shopversions = ();
-    foreach my $model (@$models) {
-        my $shopversion = $model->attributesAsHash()->{shopversion};
-        unless(grep {/$shopversion/} @shopversions) {
-            push(@shopversions, $shopversion);
-        }
-    }
-
-    return \@shopversions;
-}
-
-sub allShopArten {
-    my $self = shift;
-    
-    my $models = $self->all();
-
-    my @shoparten = ();
-    foreach my $model (@$models) {
-        my $shopart = $model->attributesAsHash()->{shopart};
-        unless(grep {/$shopart/} @shoparten) {
-            push(@shoparten, $shopart);
-        }
-    }
-
-    return \@shoparten;
-}
-
-sub runQuery {
-    my $self = shift;
-    my $query = shift or die ; #QueryMaster::Query object, not Statement
+    my $query = shift;
+    my $bindings = shift;
 
     my $db = $self->{controller};
-
-    my $statement = $query->toSql();
-    my $bindings = $query->getBindings();
     my $tablename = $self->{tablename};
+    my $sth = $db->prepare($query);
+    $sth->execute();
+
+    my @results = ();
+    while (my @array = $sth->fetchrow_array) {
+        push(@results, shift (@array));
+    }
+    
+    return \@results;
+}
+
+sub runStatement {
+    my $self = shift;
+    my $query = shift;
+    my $bindings = shift;
 
 
-    my $sth = $db->prepare($statement =~ s/TABLENAMEPLCHLDR/$tablename/r);
-    $sth->execute(@$bindings);
+    my $db = $self->{controller};
+    my $tablename = $self->{tablename};
+    my $sth = $db->prepare($query);
+    
+    $sth->execute(@$bindings) or die $DBI::errstr;
 
-    $self->{lastStatement} = $sth->{Statement};
+    # die Dumper($sth->fetchrow_array);
 
     return $self->modelsFromStatementHandler($sth);
+
 }
+
 
 1;

@@ -11,17 +11,12 @@ my $templatesfolder = getFolder() . "../../../templates";
 
 sub new {
     my $class = shift;
-    my $columnnames = shift or die "No Columnname-List specified;";
-    my $tablename = shift or die "No Tablename specified";
-    my $lastsearch = shift || "";
 
-    my $self = {
-        template => HTML::Template->new(filename => "$templatesfolder/components/table.tmpl"),
-        columnnames => $columnnames,
-        tablename => $tablename,
-        lastsearch => $lastsearch
-        };
-    bless($self, $class);
+    my (%args) = @_;
+
+    $args{template} = HTML::Template->new(filename => "$templatesfolder/components/table.tmpl", vanguard_compatibility_mode => 1);
+
+    bless(\%args, $class);
 }
 
 sub fillRows {
@@ -37,18 +32,22 @@ sub fillRows {
     }
     $self->{template}->param(
         rows => \@rowsData,
-        resultcount => scalar @rowsData
+        resultcount => scalar @rowsData,
+        pagemaximumreached => scalar @rowsData < $self->{limit}
     );
     return $self;
 }
 
 sub output {
     my $self = shift;
-
     $self->{template}->param(
         headers => $self->headers(),
         tablename => "Table: " . $self->{tablename},
-        # lastsearch => $self->{lastsearch},
+        lastSortName => $self->{orderedBy},
+        lastSortOrder => $self->{order},
+        tablepage => $self->{page},
+        pageminimumreached => $self->{page} == 1 || $self->{page} < 1,
+        limit => $self->{limit}
     );
     return $self->{template}->output();
 }

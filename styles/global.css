@@ -1,0 +1,11 @@
+/* Global styles */
+.qm-opaque {
+    display: none;
+}
+.qm-pointercursor {
+    cursor: pointer;
+}
+
+.qm-waiting {
+    opacity: 0.5;
+}

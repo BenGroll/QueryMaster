@@ -36,7 +36,6 @@ sub register {
             # abort('Wow, what a password.', 422);
 
         }
-
         return;
 
     });

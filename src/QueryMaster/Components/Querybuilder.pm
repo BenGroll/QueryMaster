@@ -4,66 +4,21 @@ use strict;
 use warnings;
 
 use Data::Dumper;
-use QueryMaster::Query;
 use JSON;
 
 sub new {
     my $class = shift;
-    my $lastStatement = shift;
-    
-
-    my $templatesfolder = getFolder() . "../../../templates";
+    my $lastStatement = shift;    
 
     my @emptyarray = ();
 
     my $self = {
-        templatesfolder => $templatesfolder,
-        template => HTML::Template->new(filename => "$templatesfolder/components/querybuilder.tmpl"),
+        templatesfolder => getFolder() . "../../../templates",
+        template => HTML::Template->new(filename => getFolder() . "../../../templates/components/querybuilder.tmpl", vanguard_compatibility_mode => 1),
         lastStatement => $lastStatement,
-        options => \@emptyarray  
+        options => \@emptyarray,
     };
     bless($self, $class);
-}
-
-sub dropdownoperators {
-    my $self = shift;
-    
-    my $lookuptable = QueryMaster::Query->lookupTable();
-    my $operators = $lookuptable->{operator};
-    
-    my @operatorsdata = ();
-    foreach my $operatorid (keys %$operators) {
-        push(@operatorsdata, {
-            operatorid => $operatorid,
-            operator => $operators->{$operatorid}
-        });
-    }
-    return \@operatorsdata;
-}
-
-sub dropdownfields {
-    my $self = shift;
-    my $fields = shift or die "No fields provided";
-
-    my @fieldsdata = ();
-    foreach my $field (@$fields) {
-        push(@fieldsdata, {fieldname => $field});
-    }
-    return \@fieldsdata;
-}
-
-sub fillDropdowns {
-    my $self = shift;
-    my $fields = shift;
-
-    # bypass
-    return $self;
-
-    $self->{template}->param(
-        operators => $self->dropdownoperators(),
-        fields => $self->dropdownfields($fields)
-    );
-    return $self;
 }
 
 sub addOptionRow {
@@ -86,47 +41,34 @@ sub output {
     my $self = shift;
     my $filter = shift;
 
-    my @emptyarray = ();
-
-    my $options = $self->{options};
-
-    my $totalfiltercheckboxesdata = {};
-
-    my @optionsdata = ();
-    foreach my $option (@$options) {
-        my $optionname = $option->[0]->{'parametername'};
-        my $thisFilterActiveInPreviousSite = exists $filter->{$optionname} ? 'checked' : '';
-
-        my $title = $option->[0]->{parametername};
-        my $template = HTML::Template->new(filename => $self->{templatesfolder} . "/snippets/collapsible.tmpl");
-        my @dataforjson = ();
-        my @thisparamcheckboxesdata = ();
-        foreach my $checkbox (@$option) {
-            my $selected = 0;
-            if($thisFilterActiveInPreviousSite && ($checkbox->{boxvalue} ~~ $filter->{$optionname})) {
-                $selected = "selected";
-            }
-            my $data = {
-                optionvalue => $checkbox->{boxvalue},
-                selected => $selected
-            };
-            push(@thisparamcheckboxesdata, $data);
-            push(@dataforjson, $checkbox->{boxvalue});
+    my $repo = QueryMaster::CosmoShopRepository->new();
+    foreach my $column (@$filter) {
+        my $models = $repo->allFromColumn($column);
+        if(scalar @$models > 0) {
+            $self->addOptionRow($column, $models);
         }
-        $totalfiltercheckboxesdata->{$title} = \@dataforjson;
-        $template->param(
-            parametername => $title,
-            options => \@thisparamcheckboxesdata,
-            # filterchecked => $thisFilterActiveInPreviousSite
-        );
-        push(@optionsdata, {option => $template->output()});
     }
-    
+    my $options = $self->{options};
+    my $optionsCheckBoxes = ();
+    my @paramnames = ();
+    foreach my $option (@$options) {
+        my $data = ();
+        foreach my $value (@$option) {
+            push(@$data, {optionvalue => $value->{boxvalue}})
+        }
+        push(@paramnames, $option->[0]->{parametername});
 
+        my $template = HTML::Template->new(filename => $self->{templatesfolder} . "/snippets/collapsible.tmpl" , vanguard_compatibility_mode => 1);
+    
+        $template->param(
+            "parametername" => $option->[0]->{parametername},
+            "options" => $data
+        );
+        push(@$optionsCheckBoxes, {option => $template->output()});
+    }
     $self->{template}->param(
-        # ranstatement => $self->{ranstatement},
-        optionsCheckboxes => \@optionsdata,
-        filtercheckboxesdata => encode_json($totalfiltercheckboxesdata)
+        optionsCheckBoxes => $optionsCheckBoxes,
+        filters => encode_json(\@paramnames)
     );
 
     return $self->{template}->output();

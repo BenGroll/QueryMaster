@@ -1,0 +1,10 @@
+/* Styles for the Master Layout */
+.qm-whole {
+    min-width: 70vw;
+    max-width: 70vw;
+}
+.qm-grid {
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: 1fr 5fr;
+}
